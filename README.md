@@ -12,7 +12,7 @@ DJI Tello 드론을 한국어 음성 명령으로 제어하는 프로젝트입�
 
 1. 저장소 클론
 ```bash
-git clone https://github.com/yourusername/voice-controlled-tello.git
+git clone https://github.com/jkf87/voice-controlled-tello.git
 cd voice-controlled-tello
 ```
 
