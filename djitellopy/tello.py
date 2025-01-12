@@ -1,4 +1,6 @@
-"""Library for interacting with DJI Ryze Tello drones.
+"""
+DJI Tello 드론을 제어하기 위한 라이브러리.
+이 라이브러리는 공식 Tello SDK를 기반으로 만들어졌습니다.
 """
 
 # coding=utf-8
@@ -22,47 +24,54 @@ client_socket: socket.socket
 
 
 class TelloException(Exception):
+    """Tello 드론 관련 예외를 처리하기 위한 클래스"""
     pass
 
 
 @enforce_types
 class Tello:
-    """Python wrapper to interact with the Ryze Tello drone using the official Tello api.
-    Tello API documentation:
-    [1.3](https://dl-cdn.ryzerobotics.com/downloads/tello/20180910/Tello%20SDK%20Documentation%20EN_1.3.pdf),
-    [2.0 with EDU-only commands](https://dl-cdn.ryzerobotics.com/downloads/Tello/Tello%20SDK%202.0%20User%20Guide.pdf)
     """
-    # Send and receive commands, client socket
-    RESPONSE_TIMEOUT = 7  # in seconds
-    TAKEOFF_TIMEOUT = 20  # in seconds
-    FRAME_GRAB_TIMEOUT = 5
-    TIME_BTW_COMMANDS = 0.1  # in seconds
-    TIME_BTW_RC_CONTROL_COMMANDS = 0.001  # in seconds
-    RETRY_COUNT = 3  # number of retries after a failed command
-    TELLO_IP = '192.168.10.1'  # Tello IP address
+    Ryze Tello 드론을 제어하기 위한 Python 래퍼 클래스.
+    공식 Tello SDK를 사용하여 드론과 통신합니다.
+    
+    주요 기능:
+    - 기본적인 비행 제어 (이륙, 착륙, 이동, 회전)
+    - 카메라 스트리밍
+    - 상태 모니터링 (배터리, 높이, 속도 등)
+    - 미션 패드 감지 (Tello EDU 전용)
+    """
+    # 통신 관련 상수
+    RESPONSE_TIMEOUT = 7  # 응답 대기 시간 (초)
+    TAKEOFF_TIMEOUT = 20  # 이륙 대기 시간 (초)
+    FRAME_GRAB_TIMEOUT = 5  # 프레임 획득 타임아웃
+    TIME_BTW_COMMANDS = 0.1  # 명령어 사이의 대기 시간 (초)
+    TIME_BTW_RC_CONTROL_COMMANDS = 0.001  # RC 제어 명령어 사이의 대기 시간 (초)
+    RETRY_COUNT = 3  # 실패한 명령어 재시도 횟수
+    TELLO_IP = '192.168.10.1'  # Tello 드론의 IP 주소
 
-    # Video stream, server socket
+    # 비디오 스트리밍 관련 상수
     VS_UDP_IP = '0.0.0.0'
     DEFAULT_VS_UDP_PORT = 11111
     VS_UDP_PORT = DEFAULT_VS_UDP_PORT
 
-    CONTROL_UDP_PORT = 8889
-    STATE_UDP_PORT = 8890
+    # UDP 통신 포트
+    CONTROL_UDP_PORT = 8889  # 제어 명령 포트
+    STATE_UDP_PORT = 8890    # 상태 정보 포트
 
-    # Constants for video settings
-    BITRATE_AUTO = 0
-    BITRATE_1MBPS = 1
-    BITRATE_2MBPS = 2
-    BITRATE_3MBPS = 3
-    BITRATE_4MBPS = 4
-    BITRATE_5MBPS = 5
-    RESOLUTION_480P = 'low'
-    RESOLUTION_720P = 'high'
-    FPS_5 = 'low'
-    FPS_15 = 'middle'
-    FPS_30 = 'high'
-    CAMERA_FORWARD = 0
-    CAMERA_DOWNWARD = 1
+    # 비디오 설정 관련 상수
+    BITRATE_AUTO = 0        # 자동 비트레이트
+    BITRATE_1MBPS = 1       # 1Mbps
+    BITRATE_2MBPS = 2       # 2Mbps
+    BITRATE_3MBPS = 3       # 3Mbps
+    BITRATE_4MBPS = 4       # 4Mbps
+    BITRATE_5MBPS = 5       # 5Mbps
+    RESOLUTION_480P = 'low'  # 480p 해상도
+    RESOLUTION_720P = 'high' # 720p 해상도
+    FPS_5 = 'low'           # 5fps
+    FPS_15 = 'middle'       # 15fps
+    FPS_30 = 'high'         # 30fps
+    CAMERA_FORWARD = 0      # 전방 카메라
+    CAMERA_DOWNWARD = 1     # 하방 카메라
 
     # Set up logger
     HANDLER = logging.StreamHandler()
@@ -356,69 +365,86 @@ class Tello:
         return self.get_state_field('agz')
 
     def get_lowest_temperature(self) -> int:
-        """Get lowest temperature
-        Returns:
-            int: lowest temperature (°C)
+        """
+        드론의 최저 온도를 반환합니다.
+        
+        반환값:
+            int: 최저 온도 (°C)
         """
         return self.get_state_field('templ')
 
     def get_highest_temperature(self) -> int:
-        """Get highest temperature
-        Returns:
-            float: highest temperature (°C)
+        """
+        드론의 최고 온도를 반환합니다.
+        
+        반환값:
+            float: 최고 온도 (°C)
         """
         return self.get_state_field('temph')
 
     def get_temperature(self) -> float:
-        """Get average temperature
-        Returns:
-            float: average temperature (°C)
+        """
+        현재 드론의 평균 온도를 반환합니다.
+        
+        반환값:
+            float: 온도 (°C)
         """
         templ = self.get_lowest_temperature()
         temph = self.get_highest_temperature()
         return (templ + temph) / 2
 
     def get_height(self) -> int:
-        """Get current height in cm
-        Returns:
-            int: height in cm
+        """
+        현재 높이를 반환합니다.
+        
+        반환값:
+            int: 높이 (cm)
         """
         return self.get_state_field('h')
 
     def get_distance_tof(self) -> int:
-        """Get current distance value from TOF in cm
-        Returns:
-            int: TOF distance in cm
+        """
+        TOF(Time of Flight) 센서로 측정한 현재 거리를 반환합니다.
+        
+        반환값:
+            int: TOF 거리 (cm)
         """
         return self.get_state_field('tof')
 
     def get_barometer(self) -> int:
-        """Get current barometer measurement in cm
-        This resembles the absolute height.
-        See https://en.wikipedia.org/wiki/Altimeter
-        Returns:
-            int: barometer measurement in cm
+        """
+        현재 기압계 측정값을 반환합니다.
+        절대 고도를 나타냅니다.
+        
+        반환값:
+            int: 기압계 측정값 (cm)
         """
         return self.get_state_field('baro') * 100
 
     def get_flight_time(self) -> int:
-        """Get the time the motors have been active in seconds
-        Returns:
-            int: flight time in s
+        """
+        모터가 작동한 시간을 반환합니다.
+        
+        반환값:
+            int: 비행 시간 (초)
         """
         return self.get_state_field('time')
 
     def get_battery(self) -> int:
-        """Get current battery percentage
-        Returns:
-            int: 0-100
+        """
+        현재 배터리 잔량을 반환합니다.
+        
+        반환값:
+            int: 배터리 잔량 (0-100%)
         """
         return self.get_state_field('bat')
 
     def get_udp_video_address(self) -> str:
-        """Internal method, you normally wouldn't call this youself.
         """
-        address_schema = 'udp://@{ip}:{port}'  # + '?overrun_nonfatal=1&fifo_size=5000'
+        비디오 스트리밍을 위한 UDP 주소를 반환합니다.
+        내부 메서드로, 직접 호출할 필요는 없습니다.
+        """
+        address_schema = 'udp://@{ip}:{port}'
         address = address_schema.format(ip=self.VS_UDP_IP, port=self.vs_udp_port)
         return address
 
@@ -542,7 +568,11 @@ class Tello:
                              .format(command, tries, response))
 
     def connect(self, wait_for_state=True):
-        """Enter SDK mode. Call this before any of the control functions.
+        """
+        SDK 모드로 진입합니다. 다른 제어 함수를 사용하기 전에 반드시 호출해야 합니다.
+        
+        매개변수:
+            wait_for_state (bool): 상태 패킷을 기다릴지 여부
         """
         self.send_control_command("command")
 
@@ -550,59 +580,59 @@ class Tello:
             REPS = 20
             for i in range(REPS):
                 if self.get_current_state():
-                    t = i / REPS  # in seconds
-                    Tello.LOGGER.debug("'.connect()' received first state packet after {} seconds".format(t))
+                    t = i / REPS
+                    Tello.LOGGER.debug("'.connect()' 첫 상태 패킷 수신 ({}초 후)".format(t))
                     break
                 time.sleep(1 / REPS)
 
             if not self.get_current_state():
-                raise TelloException('Did not receive a state packet from the Tello')
+                raise TelloException('Tello로부터 상태 패킷을 받지 못했습니다')
 
     def send_keepalive(self):
-        """Send a keepalive packet to prevent the drone from landing after 15s
+        """
+        15초 후 자동 착륙을 방지하기 위한 keepalive 패킷을 전송합니다.
         """
         self.send_control_command("keepalive")
 
     def turn_motor_on(self):
-        """Turn on motors without flying (mainly for cooling)
+        """
+        비행하지 않고 모터만 켭니다 (주로 냉각 목적).
         """
         self.send_control_command("motoron")
 
     def turn_motor_off(self):
-        """Turns off the motor cooling mode
+        """
+        모터 냉각 모드를 종료합니다.
         """
         self.send_control_command("motoroff")
 
     def initiate_throw_takeoff(self):
-        """Allows you to take off by throwing your drone within 5 seconds of this command
+        """
+        드론을 던져서 이륙하는 모드를 활성화합니다.
+        명령 후 5초 이내에 드론을 던져야 합니다.
         """
         self.send_control_command("throwfly")
         self.is_flying = True
 
     def takeoff(self):
-        """Automatic takeoff.
         """
-        # Something it takes a looooot of time to take off and return a succesful takeoff.
-        # So we better wait. Otherwise, it would give us an error on the following calls.
+        자동 이륙을 수행합니다.
+        이륙이 완료될 때까지 대기합니다.
+        """
         self.send_control_command("takeoff", timeout=Tello.TAKEOFF_TIMEOUT)
         self.is_flying = True
 
     def land(self):
-        """Automatic landing.
+        """
+        자동 착륙을 수행합니다.
         """
         self.send_control_command("land")
         self.is_flying = False
 
     def streamon(self):
-        """Turn on video streaming. Use `tello.get_frame_read` afterwards.
-        Video Streaming is supported on all tellos when in AP mode (i.e.
-        when your computer is connected to Tello-XXXXXX WiFi ntwork).
-        Tello EDUs support video streaming while connected to a
-        WiFi-network via SDK 3.
-
-        !!! Note:
-            If the response is 'Unknown command' you have to update the Tello
-            firmware. This can be done using the official Tello app.
+        """
+        비디오 스트리밍을 시작합니다.
+        이후 tello.get_frame_read()를 사용하여 프레임을 받을 수 있습니다.
         """
         if self.DEFAULT_VS_UDP_PORT != self.vs_udp_port:
             self.change_vs_udp(self.vs_udp_port)
@@ -610,7 +640,8 @@ class Tello:
         self.stream_on = True
 
     def streamoff(self):
-        """Turn off video streaming.
+        """
+        비디오 스트리밍을 종료합니다.
         """
         self.send_control_command("streamoff")
         self.stream_on = False
@@ -620,118 +651,147 @@ class Tello:
             self.background_frame_read = None
 
     def emergency(self):
-        """Stop all motors immediately.
+        """
+        비상 정지: 모든 모터를 즉시 정지시킵니다.
+        긴급 상황에서만 사용하세요!
         """
         self.send_command_without_return("emergency")
         self.is_flying = False
 
     def move(self, direction: str, x: int):
-        """Tello fly up, down, left, right, forward or back with distance x cm.
-        Users would normally call one of the move_x functions instead.
-        Arguments:
-            direction: up, down, left, right, forward or back
-            x: 20-500
+        """
+        지정된 방향으로 x cm만큼 이동합니다.
+        
+        매개변수:
+            direction: 이동 방향 (up, down, left, right, forward, back)
+            x: 이동 거리 (20-500cm)
         """
         self.send_control_command("{} {}".format(direction, x))
 
     def move_up(self, x: int):
-        """Fly x cm up.
-        Arguments:
-            x: 20-500
+        """
+        위로 x cm 이동합니다.
+        
+        매개변수:
+            x: 이동 거리 (20-500cm)
         """
         self.move("up", x)
 
     def move_down(self, x: int):
-        """Fly x cm down.
-        Arguments:
-            x: 20-500
+        """
+        아래로 x cm 이동합니다.
+        
+        매개변수:
+            x: 이동 거리 (20-500cm)
         """
         self.move("down", x)
 
     def move_left(self, x: int):
-        """Fly x cm left.
-        Arguments:
-            x: 20-500
+        """
+        왼쪽으로 x cm 이동합니다.
+        
+        매개변수:
+            x: 이동 거리 (20-500cm)
         """
         self.move("left", x)
 
     def move_right(self, x: int):
-        """Fly x cm right.
-        Arguments:
-            x: 20-500
+        """
+        오른쪽으로 x cm 이동합니다.
+        
+        매개변수:
+            x: 이동 거리 (20-500cm)
         """
         self.move("right", x)
 
     def move_forward(self, x: int):
-        """Fly x cm forward.
-        Arguments:
-            x: 20-500
+        """
+        앞으로 x cm 이동합니다.
+        
+        매개변수:
+            x: 이동 거리 (20-500cm)
         """
         self.move("forward", x)
 
     def move_back(self, x: int):
-        """Fly x cm backwards.
-        Arguments:
-            x: 20-500
+        """
+        뒤로 x cm 이동합니다.
+        
+        매개변수:
+            x: 이동 거리 (20-500cm)
         """
         self.move("back", x)
 
     def rotate_clockwise(self, x: int):
-        """Rotate x degree clockwise.
-        Arguments:
-            x: 1-360
+        """
+        시계 방향으로 x도 회전합니다.
+        
+        매개변수:
+            x: 회전 각도 (1-360도)
         """
         self.send_control_command("cw {}".format(x))
 
     def rotate_counter_clockwise(self, x: int):
-        """Rotate x degree counter-clockwise.
-        Arguments:
-            x: 1-3600
+        """
+        반시계 방향으로 x도 회전합니다.
+        
+        매개변수:
+            x: 회전 각도 (1-360도)
         """
         self.send_control_command("ccw {}".format(x))
 
     def flip(self, direction: str):
-        """Do a flip maneuver.
-        Users would normally call one of the flip_x functions instead.
-        Arguments:
-            direction: l (left), r (right), f (forward) or b (back)
+        """
+        지정된 방향으로 플립(공중제비) 동작을 수행합니다.
+        일반적으로 flip_x 함수들을 대신 사용합니다.
+        
+        매개변수:
+            direction: l (왼쪽), r (오른쪽), f (앞쪽) 또는 b (뒤쪽)
         """
         self.send_control_command("flip {}".format(direction))
 
     def flip_left(self):
-        """Flip to the left.
+        """
+        왼쪽으로 플립(공중제비) 동작을 수행합니다.
         """
         self.flip("l")
 
     def flip_right(self):
-        """Flip to the right.
+        """
+        오른쪽으로 플립(공중제비) 동작을 수행합니다.
         """
         self.flip("r")
 
     def flip_forward(self):
-        """Flip forward.
+        """
+        앞으로 플립(공중제비) 동작을 수행합니다.
         """
         self.flip("f")
 
     def flip_back(self):
-        """Flip backwards.
+        """
+        뒤로 플립(공중제비) 동작을 수행합니다.
         """
         self.flip("b")
 
     def go_xyz_speed(self, x: int, y: int, z: int, speed: int):
-        """Fly to x y z relative to the current position.
-        Speed defines the traveling speed in cm/s.
-        Arguments:
-            x: -500-500
-            y: -500-500
-            z: -500-500
-            speed: 10-100
+        """
+        현재 위치를 기준으로 x, y, z 좌표로 이동합니다.
+        speed로 이동 속도를 지정합니다.
+        
+        매개변수:
+            x: x축 이동 거리 (-500~500cm)
+            y: y축 이동 거리 (-500~500cm)
+            z: z축 이동 거리 (-500~500cm)
+            speed: 이동 속도 (10-100cm/s)
         """
         cmd = 'go {} {} {} {}'.format(x, y, z, speed)
         self.send_control_command(cmd)
 
     def stop(self):
-        """Hovers in the air. Works at any time.
+        """
+        드론을 현재 위치에서 정지(호버링)시킵니다.
+        언제든지 사용 가능합니다.
         """
         self.send_control_command("stop")
 
@@ -825,9 +885,11 @@ class Tello:
         self.send_control_command("mdirection {}".format(x))
 
     def set_speed(self, x: int):
-        """Set speed to x cm/s.
-        Arguments:
-            x: 10-100
+        """
+        드론의 이동 속도를 설정합니다.
+        
+        매개변수:
+            x: 속도 (10-100cm/s)
         """
         self.send_control_command("speed {}".format(x))
 
@@ -854,35 +916,41 @@ class Tello:
             self.send_command_without_return(cmd)
 
     def set_wifi_credentials(self, ssid: str, password: str):
-        """Set the Wi-Fi SSID and password. The Tello will reboot afterwords.
+        """
+        드론의 WiFi SSID와 비밀번호를 설정합니다.
+        설정 후 드론이 재부팅됩니다.
+        
+        매개변수:
+            ssid: WiFi 네트워크 이름
+            password: WiFi 비밀번호
         """
         cmd = 'wifi {} {}'.format(ssid, password)
         self.send_control_command(cmd)
 
     def connect_to_wifi(self, ssid: str, password: str):
-        """Connects to the Wi-Fi with SSID and password.
-        After this command the tello will reboot.
-        Only works with Tello EDUs.
+        """WiFi에 SSID와 비밀번호로 연결합니다.
+        이 명령어 실행 후 텔로가 재부팅됩니다.
+        Tello EDU 모델에서만 작동합니다.
         """
         cmd = 'ap {} {}'.format(ssid, password)
         self.send_control_command(cmd)
 
     def set_network_ports(self, state_packet_port: int, video_stream_port: int):
-        """Sets the ports for state packets and video streaming
-        While you can use this command to reconfigure the Tello this library currently does not support
-        non-default ports (TODO!)
+        """상태 패킷과 비디오 스트리밍을 위한 포트를 설정합니다.
+        이 명령어로 텔로를 재구성할 수 있지만 현재 이 라이브러리는
+        기본 포트가 아닌 포트는 지원하지 않습니다 (TODO!)
         """
         cmd = 'port {} {}'.format(state_packet_port, video_stream_port)
         self.send_control_command(cmd)
 
     def reboot(self):
-        """Reboots the drone
+        """드론을 재부팅합니다
         """
         self.send_command_without_return('reboot')
 
     def set_video_bitrate(self, bitrate: int):
-        """Sets the bitrate of the video stream
-        Use one of the following for the bitrate argument:
+        """비디오 스트림의 비트레이트를 설정합니다
+        비트레이트 인자로 다음 중 하나를 사용하세요:
             Tello.BITRATE_AUTO
             Tello.BITRATE_1MBPS
             Tello.BITRATE_2MBPS
@@ -894,8 +962,8 @@ class Tello:
         self.send_control_command(cmd)
 
     def set_video_resolution(self, resolution: str):
-        """Sets the resolution of the video stream
-        Use one of the following for the resolution argument:
+        """비디오 스트림의 해상도를 설정합니다
+        해상도 인자로 다음 중 하나를 사용하세요:
             Tello.RESOLUTION_480P
             Tello.RESOLUTION_720P
         """
@@ -903,8 +971,8 @@ class Tello:
         self.send_control_command(cmd)
 
     def set_video_fps(self, fps: str):
-        """Sets the frames per second of the video stream
-        Use one of the following for the fps argument:
+        """비디오 스트림의 초당 프레임 수를 설정합니다
+        fps 인자로 다음 중 하나를 사용하세요:
             Tello.FPS_5
             Tello.FPS_15
             Tello.FPS_30
@@ -913,10 +981,10 @@ class Tello:
         self.send_control_command(cmd)
 
     def set_video_direction(self, direction: int):
-        """Selects one of the two cameras for video streaming
-        The forward camera is the regular 1080x720 color camera
-        The downward camera is a grey-only 320x240 IR-sensitive camera
-        Use one of the following for the direction argument:
+        """비디오 스트리밍을 위한 두 카메라 중 하나를 선택합니다
+        전방 카메라는 일반 1080x720 컬러 카메라입니다
+        하방 카메라는 320x240 흑백 IR 감지 카메라입니다
+        방향 인자로 다음 중 하나를 사용하세요:
             Tello.CAMERA_FORWARD
             Tello.CAMERA_DOWNWARD
         """
@@ -924,109 +992,111 @@ class Tello:
         self.send_control_command(cmd)
 
     def send_expansion_command(self, expansion_cmd: str):
-        """Sends a command to the ESP32 expansion board connected to a Tello Talent
-        Use e.g. tello.send_expansion_command("led 255 0 0") to turn the top led red.
+        """Tello Talent에 연결된 ESP32 확장 보드로 명령을 전송합니다
+        예: tello.send_expansion_command("led 255 0 0")로 상단 LED를 빨간색으로 설정
         """
         cmd = 'EXT {}'.format(expansion_cmd)
         self.send_control_command(cmd)
 
     def query_speed(self) -> int:
-        """Query speed setting (cm/s)
-        Returns:
+        """속도 설정을 조회합니다 (cm/s)
+        반환값:
             int: 1-100
         """
         return self.send_read_command_int('speed?')
 
     def query_battery(self) -> int:
-        """Get current battery percentage via a query command
-        Using get_battery is usually faster
-        Returns:
-            int: 0-100 in %
+        """쿼리 명령을 통해 현재 배터리 잔량을 가져옵니다
+        get_battery를 사용하는 것이 일반적으로 더 빠릅니다
+        반환값:
+            int: 0-100 (%)
         """
         return self.send_read_command_int('battery?')
 
     def query_flight_time(self) -> int:
-        """Query current fly time (s).
-        Using get_flight_time is usually faster.
-        Returns:
-            int: Seconds elapsed during flight.
+        """현재 비행 시간을 조회합니다 (초).
+        get_flight_time을 사용하는 것이 일반적으로 더 빠릅니다.
+        반환값:
+            int: 비행 중 경과된 시간(초).
         """
         return self.send_read_command_int('time?')
 
     def query_height(self) -> int:
-        """Get height in cm via a query command.
-        Using get_height is usually faster
-        Returns:
+        """쿼리 명령을 통해 높이를 cm 단위로 가져옵니다.
+        get_height를 사용하는 것이 일반적으로 더 빠릅니다
+        반환값:
             int: 0-3000
         """
         return self.send_read_command_int('height?')
 
     def query_temperature(self) -> int:
-        """Query temperature (°C).
-        Using get_temperature is usually faster.
-        Returns:
+        """온도를 조회합니다 (°C).
+        get_temperature를 사용하는 것이 일반적으로 더 빠릅니다.
+        반환값:
             int: 0-90
         """
         return self.send_read_command_int('temp?')
 
     def query_attitude(self) -> dict:
-        """Query IMU attitude data.
-        Using get_pitch, get_roll and get_yaw is usually faster.
-        Returns:
+        """IMU 자세 데이터를 조회합니다.
+        get_pitch, get_roll, get_yaw를 사용하는 것이 일반적으로 더 빠릅니다.
+        반환값:
             {'pitch': int, 'roll': int, 'yaw': int}
         """
         response = self.send_read_command('attitude?')
         return Tello.parse_state(response)
 
     def query_barometer(self) -> int:
-        """Get barometer value (cm)
-        Using get_barometer is usually faster.
-        Returns:
+        """기압계 값을 가져옵니다 (cm)
+        get_barometer를 사용하는 것이 일반적으로 더 빠릅니다.
+        반환값:
             int: 0-100
         """
         baro = self.send_read_command_int('baro?')
         return baro * 100
 
     def query_distance_tof(self) -> float:
-        """Get distance value from TOF (cm)
-        Using get_distance_tof is usually faster.
-        Returns:
+        """TOF 센서로부터 거리 값을 가져옵니다 (cm)
+        get_distance_tof를 사용하는 것이 일반적으로 더 빠릅니다.
+        반환값:
             float: 30-1000
         """
-        # example response: 801mm
+        # 응답 예시: 801mm
         tof = self.send_read_command('tof?')
         return int(tof[:-2]) / 10
 
     def query_wifi_signal_noise_ratio(self) -> str:
-        """Get Wi-Fi SNR
-        Returns:
+        """Wi-Fi SNR을 가져옵니다
+        반환값:
             str: snr
         """
         return self.send_read_command('wifi?')
 
     def query_sdk_version(self) -> str:
-        """Get SDK Version
-        Returns:
-            str: SDK Version
+        """SDK 버전을 가져옵니다
+        반환값:
+            str: SDK 버전
         """
         return self.send_read_command('sdk?')
 
     def query_serial_number(self) -> str:
-        """Get Serial Number
-        Returns:
-            str: Serial Number
+        """시리얼 번호를 가져옵니다
+        반환값:
+            str: 시리얼 번호
         """
         return self.send_read_command('sn?')
 
     def query_active(self) -> str:
-        """Get the active status
-        Returns:
+        """활성 상태를 가져옵니다
+        반환값:
             str
         """
         return self.send_read_command('active?')
 
     def end(self):
-        """Call this method when you want to end the tello object
+        """
+        드론과의 연결을 안전하게 종료합니다.
+        프로그램 종료 전에 반드시 호출해야 합니다.
         """
         try:
             if self.is_flying:
@@ -1050,8 +1120,8 @@ class Tello:
 
 class BackgroundFrameRead:
     """
-    This class read frames using PyAV in background. Use
-    backgroundFrameRead.frame to get the current frame.
+    이 클래스는 백그라운드에서 PyAV를 사용하여 프레임을 읽습니다.
+    현재 프레임을 가져오려면 backgroundFrameRead.frame을 사용하세요.
     """
 
     def __init__(self, tello, address, with_queue = False, maxsize = 32):
@@ -1061,27 +1131,27 @@ class BackgroundFrameRead:
         self.frames = deque([], maxsize)
         self.with_queue = with_queue
 
-        # Try grabbing frame with PyAV
-        # According to issue #90 the decoder might need some time
+        # PyAV로 프레임 가져오기 시도
+        # 이슈 #90에 따르면 디코더가 시간이 필요할 수 있음
         # https://github.com/damiafuentes/DJITelloPy/issues/90#issuecomment-855458905
         try:
-            Tello.LOGGER.debug('trying to grab video frames...')
+            Tello.LOGGER.debug('비디오 프레임 가져오기 시도 중...')
             self.container = av.open(self.address, timeout=(Tello.FRAME_GRAB_TIMEOUT, None))
         except av.error.ExitError:
-            raise TelloException('Failed to grab video frames from video stream')
+            raise TelloException('비디오 스트림에서 비디오 프레임을 가져오는데 실패했습니다')
 
         self.stopped = False
         self.worker = Thread(target=self.update_frame, args=(), daemon=True)
 
     def start(self):
-        """Start the frame update worker
-        Internal method, you normally wouldn't call this yourself.
+        """프레임 업데이트 워커를 시작합니다
+        내부 메서드로, 일반적으로 직접 호출하지 않습니다.
         """
         self.worker.start()
 
     def update_frame(self):
-        """Thread worker function to retrieve frames using PyAV
-        Internal method, you normally wouldn't call this yourself.
+        """PyAV를 사용하여 프레임을 가져오는 스레드 워커 함수
+        내부 메서드로, 일반적으로 직접 호출하지 않습니다.
         """
         try:
             for frame in self.container.decode(video=0):
@@ -1094,11 +1164,11 @@ class BackgroundFrameRead:
                     self.container.close()
                     break
         except av.error.ExitError:
-            raise TelloException('Do not have enough frames for decoding, please try again or increase video fps before get_frame_read()')
+            raise TelloException('디코딩을 위한 충분한 프레임이 없습니다. 다시 시도하거나 get_frame_read() 전에 비디오 fps를 높이세요')
     
     def get_queued_frame(self):
         """
-        Get a frame from the queue
+        큐에서 프레임을 가져옵니다
         """
         with self.lock:
             try:
@@ -1109,7 +1179,7 @@ class BackgroundFrameRead:
     @property
     def frame(self):
         """
-        Access the frame variable directly
+        frame 변수에 직접 접근
         """
         if self.with_queue:
             return self.get_queued_frame()
@@ -1123,7 +1193,7 @@ class BackgroundFrameRead:
             self._frame = value
 
     def stop(self):
-        """Stop the frame update worker
-        Internal method, you normally wouldn't call this yourself.
+        """프레임 업데이트 워커를 중지합니다
+        내부 메서드로, 일반적으로 직접 호출하지 않습니다.
         """
         self.stopped = True

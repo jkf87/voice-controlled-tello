@@ -1,16 +1,9 @@
-# simple example demonstrating how to control a Tello using your keyboard.
-# For a more fully featured example see manual-control-pygame.py
-# 
-# Use W, A, S, D for moving, E, Q for rotating and R, F for going up and down.
-# When starting the script the Tello will takeoff, pressing ESC makes it land
-#  and the script exit.
-
-# 简单的演示如何用键盘控制Tello
-# 欲使用全手动控制请查看 manual-control-pygame.py
+# 키보드를 사용하여 Tello를 제어하는 간단한 예제입니다.
+# 더 많은 기능이 포함된 예제는 manual-control-pygame.py를 참조하세요.
 #
-# W, A, S, D 移动， E, Q 转向，R、F上升与下降.
-# 开始运行程序时Tello会自动起飞，按ESC键降落
-# 并且程序会退出
+# W, A, S, D 키로 이동하고, E, Q 키로 회전하며, R, F 키로 상승 및 하강합니다.
+# 스크립트 시작 시 Tello가 이륙하며, ESC 키를 누르면 착륙하고
+# 프로그램이 종료됩니다.
 
 from djitellopy import Tello
 import cv2, math, time
@@ -24,9 +17,8 @@ frame_read = tello.get_frame_read()
 tello.takeoff()
 
 while True:
-    # In reality you want to display frames in a seperate thread. Otherwise
-    #  they will freeze while the drone moves.
-    # 在实际开发里请在另一个线程中显示摄像头画面，否则画面会在无人机移动时静止
+    # 실제로는 별도의 스레드에서 프레임을 표시해야 합니다. 그렇지 않으면
+    # 드론이 이동하는 동안 화면이 정지됩니다.
     img = frame_read.frame
     cv2.imshow("drone", img)
 
