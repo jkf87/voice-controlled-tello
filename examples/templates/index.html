@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tello Drone Control</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .video-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tello Drone Control Panel</h1>
+        <div class="video-container">
+            <img src="{{ url_for('video_feed') }}" width="640" height="480">
+        </div>
+        <div class="controls">
+            <button onclick="connectDrone()">드론 연결</button>
+            <button onclick="scanSurroundings()">주변 스캔</button>
+            <button onclick="detectObjects()">물체 감지</button>
+            <button onclick="controlDrone('takeoff')">이륙</button>
+            <button onclick="controlDrone('land')">착륙</button>
+            <button onclick="controlDrone('move', {direction: 'up', distance: 50})">위로 50cm</button>
+            <button onclick="controlDrone('move', {direction: 'down', distance: 50})">아래로 50cm</button>
+            <button onclick="controlDrone('rotate', {direction: 'clockwise', angle: 90})">90도 회전</button>
+            <button onclick="controlDrone('move', {direction: 'forward', distance: 50})">전진</button>
+        </div>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        function updateStatus(message, isError = false) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = isError ? 'error' : 'success';
+        }
+
+        async function connectDrone() {
+            try {
+                const response = await fetch('/connect', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                updateStatus(data.message, data.status === 'error');
+            } catch (error) {
+                updateStatus('연결 중 오류가 발생했습니다: ' + error, true);
+            }
+        }
+
+        async function scanSurroundings() {
+            try {
+                const response = await fetch('/scan', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                updateStatus(data.message, data.status === 'error');
+            } catch (error) {
+                updateStatus('스캔 중 오류가 발생했습니다: ' + error, true);
+            }
+        }
+
+        async function detectObjects() {
+            try {
+                const response = await fetch('/detect', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                updateStatus(data.message, data.status === 'error');
+            } catch (error) {
+                updateStatus('감지 중 오류가 발생했습니다: ' + error, true);
+            }
+        }
+
+        async function controlDrone(command, parameters = {}) {
+            try {
+                const response = await fetch('/control', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        command: command,
+                        parameters: parameters
+                    })
+                });
+                const data = await response.json();
+                updateStatus(data.message, data.status === 'error');
+            } catch (error) {
+                updateStatus('드론 제어 중 오류가 발생했습니다: ' + error, true);
+            }
+        }
+    </script>
+</body>
+</html>

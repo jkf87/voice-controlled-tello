@@ -1,3 +1,7 @@
+---
+marp: true
+---
+
 # DJITelloPy
 这是一个大疆Tello无人机的Python接口，
 使用官方 [Tello SDK](https://dl-cdn.ryzerobotics.com/downloads/tello/20180910/Tello%20SDK%20Documentation%20EN_1.3.pdf) 和 [Tello EDU SDK](https://dl-cdn.ryzerobotics.com/downloads/Tello/Tello%20SDK%202.0%20User%20Guide.pdf)。 这个库有以下功能:
