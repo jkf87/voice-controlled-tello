@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="450" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
+    <rect width="800" height="450" fill="#f8f9fa"/>
+    
+    <!-- Components -->
+    <!-- User/Voice Input -->
+    <circle cx="100" cy="200" r="40" fill="#007bff" opacity="0.8"/>
+    <text x="100" y="200" text-anchor="middle" fill="white" font-family="Arial" dominant-baseline="middle">음성 입력</text>
+    
+    <!-- Speech Recognition -->
+    <rect x="220" y="170" width="120" height="60" rx="10" fill="#28a745" opacity="0.8"/>
+    <text x="280" y="200" text-anchor="middle" fill="white" font-family="Arial" dominant-baseline="middle">음성 인식</text>
+    
+    <!-- LLM Processing with Agent Tools -->
+    <!-- Main LLM Box -->
+    <rect x="420" y="130" width="140" height="140" rx="10" fill="#dc3545" opacity="0.8"/>
+    <text x="490" y="170" text-anchor="middle" fill="white" font-family="Arial" dominant-baseline="middle">LLM Agent</text>
+    <text x="490" y="190" text-anchor="middle" fill="white" font-family="Arial" font-size="12" dominant-baseline="middle">(GPT/Gemini)</text>
+    
+    <!-- Tool Icons around LLM -->
+    <!-- Camera Tool -->
+    <rect x="380" y="135" width="30" height="25" rx="2" fill="#6c757d"/>
+    <rect x="385" y="140" width="20" height="15" rx="1" fill="#495057"/>
+    <circle cx="395" cy="147" r="5" fill="#6c757d"/>
+    <text x="395" y="170" text-anchor="middle" fill="#495057" font-family="Arial" font-size="12">Camera</text>
+    
+    <!-- IMU Tool -->
+    <rect x="565" y="135" width="30" height="25" rx="2" fill="#6c757d"/>
+    <path d="M570 142 h20 M570 147 h20 M570 152 h20" stroke="#f8f9fa" stroke-width="2"/>
+    <text x="580" y="170" text-anchor="middle" fill="#495057" font-family="Arial" font-size="12">IMU</text>
+    
+    <!-- Battery Tool -->
+    <rect x="385" y="240" width="20" height="30" rx="2" fill="#6c757d"/>
+    <rect x="390" y="237" width="10" height="3" fill="#6c757d"/>
+    <rect x="388" y="244" width="14" height="22" fill="#495057"/>
+    <text x="395" y="285" text-anchor="middle" fill="#495057" font-family="Arial" font-size="12">Battery</text>
+    
+    <!-- State Tool -->
+    <rect x="565" y="240" width="30" height="25" rx="2" fill="#6c757d"/>
+    <path d="M570 245 h20 M570 250 h20 M570 255 h20" stroke="#f8f9fa" stroke-width="2"/>
+    <text x="580" y="285" text-anchor="middle" fill="#495057" font-family="Arial" font-size="12">State</text>
+    
+    <!-- Tool Connection Lines -->
+    <line x1="410" y1="150" x2="490" y2="170" stroke="#495057" stroke-width="2" stroke-dasharray="4"/>
+    <line x1="565" y1="150" x2="490" y2="170" stroke="#495057" stroke-width="2" stroke-dasharray="4"/>
+    <line x1="405" y1="250" x2="490" y2="230" stroke="#495057" stroke-width="2" stroke-dasharray="4"/>
+    <line x1="565" y1="250" x2="490" y2="230" stroke="#495057" stroke-width="2" stroke-dasharray="4"/>
+    
+    <!-- Drone Controller -->
+    <rect x="640" y="170" width="120" height="60" rx="10" fill="#6f42c1" opacity="0.8"/>
+    <text x="700" y="200" text-anchor="middle" fill="white" font-family="Arial" dominant-baseline="middle">드론 제어</text>
+    
+    <!-- Connecting Arrows -->
+    <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#495057"/>
+        </marker>
+    </defs>
+    
+    <!-- Flow Lines -->
+    <line x1="140" y1="200" x2="210" y2="200" stroke="#495057" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <line x1="350" y1="200" x2="410" y2="200" stroke="#495057" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <line x1="570" y1="200" x2="630" y2="200" stroke="#495057" stroke-width="2" marker-end="url(#arrowhead)"/>
+    
+    <!-- Labels -->
+    <text x="175" y="180" text-anchor="middle" fill="#495057" font-family="Arial" font-size="12">"위로 1미터"</text>
+    <text x="380" y="180" text-anchor="middle" fill="#495057" font-family="Arial" font-size="12">텍스트</text>
+    <text x="600" y="180" text-anchor="middle" fill="#495057" font-family="Arial" font-size="12">명령어</text>
+    
+    <!-- Function Call Example -->
+    <rect x="420" y="320" width="140" height="80" rx="5" fill="#f8f9fa" stroke="#495057"/>
+    <text x="490" y="340" text-anchor="middle" font-family="monospace" font-size="10">{"command": "move",</text>
+    <text x="490" y="355" text-anchor="middle" font-family="monospace" font-size="10">"parameters": {</text>
+    <text x="490" y="370" text-anchor="middle" font-family="monospace" font-size="10">"direction": "up",</text>
+    <text x="490" y="385" text-anchor="middle" font-family="monospace" font-size="10">"tools": ["camera"]}</text>
+</svg> 

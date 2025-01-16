@@ -2,21 +2,21 @@
 marp: true
 theme: default
 paginate: true
-header: "드론 프로그래밍 기초 - 2차시"
+header: "드론 프로그래밍 기초 - 2일차"
 footer: "AI 기반 드론 제어"
 ---
 
 # AI 기반 드론 제어 기초
-## 2차시 (3시간)
+## 2일차 
 
 ---
 
 # 강의 개요
 
-1. AI 기반 드론 제어 시스템 구조 (45분)
-2. 음성 인식과 AI 통합 (45분)
-3. 드론 제어 시스템 구현 (45분)
-4. GUI와 안전 기능 구현 (45분)
+1. AI 기반 드론 제어 시스템 구조
+2. 음성 인식과 AI 통합 
+3. 드론 제어 시스템 구현
+4. 웹 기반 GUI와 안전 기능 구현
 
 ---
 
@@ -26,7 +26,7 @@ footer: "AI 기반 드론 제어"
 - DJITelloPy: 텔로 드론 제어
 - SpeechRecognition: 음성 인식
 - OpenAI/Google Gemini: AI 명령 처리
-- PyQt5: GUI 인터페이스
+- Flask: 웹 기반 인터페이스
 - gTTS: 텍스트 음성 변환
 
 ---
@@ -49,7 +49,7 @@ load_dotenv()
 pip install djitellopy opencv-python
 pip install speechrecognition openai
 pip install google-generativeai
-pip install PyQt5 gtts pygame
+pip install flask gtts pygame
 ```
 
 ---
@@ -78,28 +78,25 @@ class DroneController:
 
 # 2. 음성 인식과 AI 통합
 
-## 음성 인식 시스템
+## 음성 인식 시스템 
+```
+import speech_recognition as sr
+```
 ```python
 def setup_voice_recognition():
     recognizer = sr.Recognizer()
     with sr.Microphone() as source:
-        # 주변 소음 조정
-        recognizer.adjust_for_ambient_noise(source)
+        recognizer.adjust_for_ambient_noise(source) ## 주변 소음 조정
         print("음성 인식 준비 완료")
     return recognizer
-
 def recognize_speech(recognizer):
     with sr.Microphone() as source:
         print("명령을 말씀해주세요...")
         audio = recognizer.listen(source)
-        return recognizer.recognize_google(
-            audio, language='ko-KR'
-        )
+        return recognizer.recognize_google(audio, language='ko-KR')
 ```
 
 ---
-
-## AI 명령 처리 시스템
 
 ### 1. OpenAI GPT 활용
 ```python
@@ -114,7 +111,7 @@ def process_voice_command(audio_text: str) -> Dict:
     """
     
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": audio_text}
@@ -143,26 +140,62 @@ def process_voice_command(audio_text: str) -> Dict:
 ### 2. Google Gemini 활용
 ```python
 def process_voice_command(audio_text: str) -> Dict:
-    prompt = """
-    드론 제어 시스템입니다. 명령을 JSON으로 변환합니다.
-    
-    가능한 명령:
-    1. 이륙: {"command": "takeoff"}
-    2. 착륙: {"command": "land"}
-    3. 이동: {
-        "command": "move",
-        "parameters": {
-            "direction": "up/down/left/right",
-            "distance": 20-500
-        }
-    }
-    """
-    
-    response = model.generate_content(prompt + audio_text)
-    return json.loads(response.text)
+    """음성 명령을 Function calling 형식으로 변환"""
+    prompt = """당신은 드론 제어 시스템입니다. 사용자의 자연어 명령을 드론 제어 명령으로 변환합니다.
+
+가능한 명령어와 형식:
+1. 이륙: {"command": "takeoff"}
+2. 착륙: {"command": "land"}
+3. 이동: {"command": "move", "parameters": {"direction": "[up/down/left/right/forward/back]", "distance": [20-500]}}
+4. 회전: {"command": "rotate", "parameters": {"direction": "[clockwise/counter_clockwise]", "angle": [1-360]}}
+
+예시:
+- "위로 1미터 올라가줘" -> {"command": "move", "parameters": {"direction": "up", "distance": 100}}
+- "오른쪽으로 90도 돌아" -> {"command": "rotate", "parameters": {"direction": "clockwise", "angle": 90}}
+
+사용자 명령을 위 JSON 형식으로 변환하여 응답해주세요. 응답은 반드시 유효한 JSON 형식이어야 합니다.
+
+사용자 명령: """ + audio_text
+
+    try:
+        response = model.generate_content(prompt)
+        # JSON 문자열을 찾아 파싱
+        response_text = response.text
+        # JSON 부분만 추출 (중괄호로 둘러싸인 부분)
+        json_str = response_text[response_text.find("{"):response_text.rfind("}")+1]
+        command = json.loads(json_str)
+        return command
+        
+    except Exception as e:
+        print(f"Gemini API 오류: {str(e)}")
+        raise
 ```
 
 ---
+
+## function calling 이해하기
+- 미리 함수를 정의해놓고 LLM이 어떤 함수를 사용할건지 판단하도록 하는 방법
+
+```
+def execute_function(self, function_name: str, parameters: Dict[str, Any] = None):
+        try:
+            if function_name == "takeoff":
+                print("이륙!")
+                return self.tello.takeoff()
+                
+            elif function_name == "land":
+                print("착륙!")
+                return self.tello.land()
+                
+            elif function_name == "move":
+                ...생략...               
+            elif function_name == "rotate":
+                
+                if direction == "clockwise":
+                   
+```
+---
+
 
 # 3. 드론 제어 시스템 구현
 
@@ -176,19 +209,12 @@ def execute_function(self, command: str, params: Dict = None):
             self.tello.land()
         elif command == "move":
             direction = params["direction"]
-            distance = params["distance"]
-            
+            distance = params["distance"]           
             if direction == "up":
                 self.tello.move_up(distance)
             elif direction == "forward":
                 self.tello.move_forward(distance)
-            # ... 기타 방향 처리
-            
-        time.sleep(1)  # 명령 실행 후 대기
-        
-    except Exception as e:
-        print(f"명령 실행 오류: {str(e)}")
-        self.emergency_land()
+            # ... 기타 방향 처리 
 ```
 
 ---
@@ -212,47 +238,22 @@ def start_video_stream(self):
 
 ---
 
-# 4. GUI와 안전 기능 구현
+# 4. 웹 기반 GUI와 안전 기능 구현
 
-## PyQt5 기반 GUI
+## Flask 기반 웹 인터페이스 (opencv도 필요함)
 ```python
-class DroneGUI(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Tello Control")
-        self.image_label = QLabel(self)
-        self.setCentralWidget(self.image_label)
-        self.resize(960, 720)
-        
-        # GUI 업데이트 타이머
-        self.update_timer = QTimer()
-        self.update_timer.timeout.connect(self.update_gui)
-        self.update_timer.start(30)  # 30ms (약 33fps)
+from flask import Flask, render_template, Response
 ```
-
----
-
-## 안전 기능 구현
-
-### 1. 배터리 모니터링
-```python
-def check_battery(self):
-    battery = self.tello.get_battery()
-    if battery < 20:
-        print(f"경고: 배터리 부족 ({battery}%)")
-        return False
-    return True
 ```
-
-### 2. 비상 착륙
-```python
-def emergency_land(self):
-    try:
-        print("비상 착륙 시도...")
-        self.tello.land()
-    except:
-        print("강제 종료")
-        self.tello.emergency()
+def get_frame():
+    while True:
+        if controller and controller.frame_reader:
+            frame = controller.frame_reader.frame
+            _, buffer = cv2.imencode('.jpg', frame)
+            frame_bytes = buffer.tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + 
+                   frame_bytes + b'\r\n')
 ```
 
 ---
@@ -267,19 +268,8 @@ def main():
         controller.connect()
         controller.start_video_stream()
         
-        while True:
-            # 음성 명령 처리
-            text = recognize_speech(recognizer)
-            if "종료" in text:
-                break
-                
-            # AI 명령 해석 및 실행
-            command = process_voice_command(text)
-            if controller.check_battery():
-                controller.execute_function(
-                    command["command"],
-                    command.get("parameters")
-                )
+        # Flask 서버 시작
+        app.run(host='0.0.0.0', port=3000)
             
     except Exception as e:
         print(f"오류 발생: {str(e)}")
@@ -290,17 +280,24 @@ def main():
 
 # 실습 과제
 
-## 1. 기본 기능 구현
+## 1. 예제코드 실행하기
+- 환경설정하기
+- 실행하기
 - 드론 연결 및 상태 확인
 - 비디오 스트리밍 설정
 - 기본 명령어 처리
+---
 
-## 2. AI 통합
+
+## 2. LLM 기능 사용하기
 - OpenAI/Gemini API 연동
 - 음성 명령 처리 구현
 - 자연어 해석 시스템
+---
 
-## 3. 안전 기능
+
+
+## 3. 기능 구현하기
 - 배터리 모니터링
 - 비상 착륙 시스템
 - 에러 처리

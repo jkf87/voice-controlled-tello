@@ -2,7 +2,7 @@
 marp: false
 theme: default
 paginate: true
-header: "드론 프로그래밍 기초 - 1차시"
+header: "드론 프로그래밍 기초 - 1일차"
 footer: "Tello 드론 프로그래밍 with Python"
 ---
 
@@ -13,10 +13,10 @@ footer: "Tello 드론 프로그래밍 with Python"
 
 # 강의 개요
 
-1. 드론의 기본 원리와 구조 (45분)
-2. Tello 드론 기본 조작법 (45분)
-3. 파이썬 SDK 소개 및 기본 제어 실습 (45분)
-4. 모터 제어 프로그래밍 (45분)
+1. 드론의 기본 원리와 구조 
+2. Tello 드론 기본 조작법 
+3. 파이썬 SDK 소개 및 기본 제어 실습 
+4. 모터 제어 프로그래밍 
 
 ---
 
